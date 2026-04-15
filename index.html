@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#7c3aed">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Mon Suivi">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <title>Mon Suivi</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- PROFILE PICKER -->
+    <div id="profile-screen" class="hidden">
+      <div class="profile-screen-inner">
+        <div class="app-logo">✦</div>
+        <h1 class="app-title">Mon Suivi</h1>
+        <p class="app-sub">Votre espace personnel bien-être</p>
+        <div id="profile-list" class="profile-list"></div>
+        <button class="btn-new-profile" id="btn-new-profile">+ Nouveau profil</button>
+      </div>
+    </div>
+
+    <!-- MAIN APP -->
+    <div id="main-app" class="hidden">
+      <header id="main-header">
+        <div class="header-top">
+          <button class="header-back" id="header-profile-btn" title="Changer de profil">
+            <span id="header-emoji">🌸</span>
+          </button>
+          <span class="header-name" id="header-name">Sarah</span>
+          <button class="header-settings-btn" id="header-settings-btn">⚙</button>
+        </div>
+      </header>
+
+      <main id="main-content"></main>
+
+      <nav class="bottom-nav" id="bottom-nav">
+        <button class="nav-btn active" data-view="dashboard">
+          <span class="nav-icon">🏠</span>
+          <span>Accueil</span>
+        </button>
+        <button class="nav-btn" data-view="poids">
+          <span class="nav-icon">⚖️</span>
+          <span>Poids</span>
+        </button>
+        <button class="nav-btn" data-view="corps">
+          <span class="nav-icon">📏</span>
+          <span>Corps</span>
+        </button>
+        <button class="nav-btn" data-view="jour">
+          <span class="nav-icon">💧</span>
+          <span>Journée</span>
+        </button>
+        <button class="nav-btn" data-view="journal">
+          <span class="nav-icon">📖</span>
+          <span>Journal</span>
+        </button>
+      </nav>
+    </div>
+
+  </div>
+
+  <!-- MODAL -->
+  <div id="modal-overlay" class="hidden">
+    <div id="modal-box"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

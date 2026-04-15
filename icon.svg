@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#ec4899"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="110" fill="url(#g)"/>
+  <!-- Heart -->
+  <path d="M256 360 C256 360 140 280 140 200 C140 160 172 132 212 140 C232 144 248 156 256 172 C264 156 280 144 300 140 C340 132 372 160 372 200 C372 280 256 360 256 360Z"
+        fill="white" opacity="0.95"/>
+  <!-- Down arrow inside heart -->
+  <line x1="256" y1="190" x2="256" y2="290" stroke="url(#g)" stroke-width="18" stroke-linecap="round"/>
+  <polyline points="226,262 256,294 286,262" fill="none" stroke="url(#g)" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -1,0 +1,13 @@
+{
+  "name": "Mon Suivi",
+  "short_name": "Mon Suivi",
+  "description": "Suivi bien-être et perte de poids",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8f7ff",
+  "theme_color": "#7c3aed",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
