@@ -335,6 +335,8 @@ function renderDashboard() {
   const moodToday = getMoodToday(data);
   const actToday = getActivityToday(data);
   const weightToday = getWeightToday(data);
+  const stepsToday = getStepsToday(data);
+  const sportMinToday = getSportDayTotal(data);
   const doneIds = getDoneChallengeIds();
   const autoChallenges = getDailyChallenges();
   const customRecurring = (data.challenges || []).filter(c => c.recurring);
