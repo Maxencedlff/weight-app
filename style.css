@@ -448,6 +448,104 @@ body {
 .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: .5; }
 .empty-text { font-size: 14px; line-height: 1.6; }
 
+/* ===== WEIGHT NOTE ===== */
+.weight-note-input {
+  width: 100%; background: var(--bg); border: 1px solid var(--border);
+  color: var(--text2); font-size: 13px; padding: 10px 14px;
+  border-radius: 10px; outline: none; margin-top: 10px;
+  font-family: inherit; transition: border-color .15s;
+}
+.weight-note-input:focus { border-color: var(--purple2); }
+.weight-note-input::placeholder { color: var(--text3); }
+
+/* ===== CHALLENGES ===== */
+.challenges-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+.challenges-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.challenges-title { font-size: 15px; font-weight: 700; color: var(--text); }
+.btn-add-challenge {
+  background: var(--grad-soft); border: 1px solid var(--border);
+  color: var(--purple); font-size: 13px; font-weight: 600;
+  padding: 6px 14px; border-radius: 50px; cursor: pointer; transition: all .15s;
+}
+.btn-add-challenge:hover { border-color: var(--purple2); }
+.challenges-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.challenge-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 10px;
+  background: var(--bg); border: 1px solid var(--border);
+  transition: all .15s;
+}
+.challenge-item.done { background: linear-gradient(135deg,#f0fdf4,#eff6ff); border-color: #86efac; opacity: .75; }
+.challenge-check { background: none; border: none; font-size: 20px; cursor: pointer; padding: 0; flex-shrink: 0; }
+.challenge-icon { font-size: 18px; flex-shrink: 0; }
+.challenge-text { flex: 1; font-size: 13px; color: var(--text); line-height: 1.4; }
+.challenge-item.done .challenge-text { text-decoration: line-through; color: var(--text3); }
+.challenge-del { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 14px; padding: 2px 4px; }
+.challenge-del:hover { color: var(--red); }
+.challenges-progress { display: flex; align-items: center; gap: 10px; }
+.challenges-progress span { font-size: 12px; color: var(--text3); white-space: nowrap; }
+.challenges-progress .progress-bar-wrap { flex: 1; margin: 0; }
+.challenges-dash { padding: 16px 20px; }
+.challenges-dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 14px; font-weight: 600; color: var(--text); }
+.challenges-dash-pct { font-size: 12px; color: var(--text3); font-weight: 400; }
+
+/* ===== FOOD / EMOTIONS ===== */
+.food-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+.food-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.food-title { font-size: 15px; font-weight: 700; color: var(--text); }
+.btn-add-food {
+  background: var(--grad-soft); border: 1px solid var(--border);
+  color: var(--purple); font-size: 13px; font-weight: 600;
+  padding: 6px 14px; border-radius: 50px; cursor: pointer;
+}
+.emotion-insight {
+  background: linear-gradient(135deg,#fef3c7,#fde8d8);
+  border: 1px solid #fcd34d; border-radius: 10px;
+  padding: 10px 14px; font-size: 13px; color: #92400e;
+  margin-bottom: 12px; line-height: 1.5;
+}
+.food-list { display: flex; flex-direction: column; gap: 8px; }
+.food-item {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  padding: 10px 12px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 10px; font-size: 12px; position: relative;
+}
+.food-item-type { font-weight: 700; padding: 2px 10px; border-radius: 50px; font-size: 11px; }
+.food-item-type.repas { background: #dbeafe; color: #1e40af; }
+.food-item-type.grignotage { background: #fce7f3; color: #9d174d; }
+.food-item-type.boisson { background: #d1fae5; color: #065f46; }
+.food-item-emo { color: var(--text2); }
+.food-item-hunger { color: var(--orange); font-style: italic; }
+.food-item-note { color: var(--text3); font-style: italic; flex-basis: 100%; }
+.food-item-time { color: var(--text3); margin-left: auto; }
+.food-del { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 14px; padding: 2px; }
+.food-del:hover { color: var(--red); }
+
+/* ===== GOALS ===== */
+.goals-section { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+.goals-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.goals-title { font-size: 15px; font-weight: 700; color: var(--text); }
+.btn-add-goal {
+  background: var(--grad-soft); border: 1px solid var(--border);
+  color: var(--purple); font-size: 13px; font-weight: 600;
+  padding: 6px 14px; border-radius: 50px; cursor: pointer;
+}
+.goals-list { display: flex; flex-direction: column; gap: 8px; }
+.goal-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 12px; transition: all .15s;
+}
+.goal-item.done { background: linear-gradient(135deg,#f0fdf4,#eff6ff); border-color: #86efac; }
+.goal-check { background: none; border: none; font-size: 20px; cursor: pointer; flex-shrink: 0; padding: 0; }
+.goal-emoji { font-size: 22px; flex-shrink: 0; }
+.goal-body { flex: 1; min-width: 0; }
+.goal-text { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.4; }
+.goal-item.done .goal-text { text-decoration: line-through; color: var(--text3); }
+.goal-date { font-size: 11px; color: var(--text3); margin-top: 3px; }
+.goal-del { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 14px; padding: 2px 4px; }
+.goal-del:hover { color: var(--red); }
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 380px) {
   .hero-weight { font-size: 40px; }
