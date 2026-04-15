@@ -92,9 +92,14 @@ const BADGES = [
   { id: 'goal',          icon: '🎯', label: 'Objectif atteint !',     check: (d,p) => p.goalWeight && getLastWeight(d) <= p.goalWeight },
   { id: 'hydration',     icon: '💧', label: '8 verres en un jour',    check: d => d.water.some(w => w.glasses >= 8) },
   { id: 'journal_7',     icon: '📖', label: '7 notes de journal',     check: d => d.journal.length >= 7 },
-  { id: 'challenge_7',   icon: '✅', label: '7 défis complétés',      check: d => (d.challengeDone||[]).length >= 7 },
-  { id: 'first_goal',    icon: '🏁', label: 'Premier objectif créé',  check: d => (d.goals||[]).length >= 1 },
+  { id: 'challenge_7',   icon: '✅', label: '7 défis complétés',         check: d => (d.challengeDone||[]).length >= 7 },
+  { id: 'first_goal',    icon: '🏁', label: 'Premier objectif créé',     check: d => (d.goals||[]).length >= 1 },
   { id: 'goal_done',     icon: '🎊', label: 'Objectif personnel atteint', check: d => (d.goals||[]).some(g => g.done) },
+  { id: 'first_sport',   icon: '🏋️', label: 'Première séance logée',     check: d => (d.sport||[]).length >= 1 },
+  { id: 'sport_30min',   icon: '⏱️', label: '30 min de sport en un jour', check: d => getSportDayTotal(d) >= 30 },
+  { id: 'sport_60min',   icon: '🔥', label: '1h de sport en un jour',    check: d => getSportDayTotal(d) >= 60 },
+  { id: 'steps_10k',     icon: '👟', label: '10 000 pas en un jour',     check: d => (d.steps||[]).some(s => s.value >= 10000) },
+  { id: 'sport_7days',   icon: '🏆', label: 'Sport 7 jours de suite',    check: d => getSportStreak(d) >= 7 },
 ];
 
 // ===== STORAGE =====
@@ -110,6 +115,8 @@ function loadData(profileId) {
   if (!data.challengeDone) data.challengeDone = [];
   if (!data.food)          data.food          = [];
   if (!data.goals)         data.goals         = [];
+  if (!data.sport)         data.sport         = [];
+  if (!data.steps)         data.steps         = [];
 }
 function saveData() {
   if (!currentProfile) return;
@@ -117,7 +124,7 @@ function saveData() {
 }
 function emptyData() {
   return { weights:[], measures:[], water:[], activity:[], mood:[], journal:[], calories:[],
-           challenges:[], challengeDone:[], food:[], goals:[] };
+           challenges:[], challengeDone:[], food:[], goals:[], sport:[], steps:[] };
 }
 function genId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -159,6 +166,30 @@ function getMoodToday(d) { return d.mood.find(m => m.date === today)?.value || n
 function getActivityToday(d) { return d.activity.find(a => a.date === today)?.types || []; }
 function getCaloriesToday(d) { return d.calories.find(c => c.date === today)?.value || null; }
 function getFoodToday(d) { return (d.food || []).filter(f => f.date === today); }
+function getSportToday(d) { return (d.sport || []).filter(s => s.date === today); }
+function getStepsToday(d) { return (d.steps || []).find(s => s.date === today)?.value || 0; }
+function getSportDayTotal(d) {
+  return getSportToday(d).reduce((sum, s) => sum + (s.duration || 0), 0);
+}
+function getSportStreak(d) {
+  const dates = [...new Set((d.sport||[]).map(s => s.date))].sort();
+  let streak = 0, cursor = new Date(today);
+  for (let i = dates.length-1; i >= 0; i--) {
+    const diff = Math.round((cursor - new Date(dates[i])) / 86400000);
+    if (diff === 0 || diff === 1) { streak++; cursor = new Date(dates[i]); }
+    else break;
+  }
+  return streak;
+}
+// Build last N days array with values
+function getLast30Days() {
+  const days = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    days.push(d.toISOString().slice(0,10));
+  }
+  return days;
+}
 function getDoneChallengeIds() {
   return (data.challengeDone || []).find(c => c.date === today)?.ids || [];
 }
@@ -287,7 +318,7 @@ function setView(view) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
   if      (view === 'dashboard') renderDashboard();
   else if (view === 'poids')     renderPoids();
-  else if (view === 'corps')     renderCorps();
+  else if (view === 'sport')     renderSport();
   else if (view === 'jour')      renderJour();
   else if (view === 'journal')   renderJournal();
 }
@@ -375,6 +406,16 @@ function renderDashboard() {
             <div class="today-item-label">Humeur</div>
             <div class="today-item-val">${moodToday ? MOODS.find(m=>m.val===moodToday)?.label : 'À faire'}</div>
           </div>
+          <div class="today-item ${sportMinToday > 0 ? 'done' : ''}" id="dash-sport">
+            <div class="today-item-icon">🏃</div>
+            <div class="today-item-label">Sport</div>
+            <div class="today-item-val">${sportMinToday > 0 ? sportMinToday + ' min' : 'À faire'}</div>
+          </div>
+          <div class="today-item ${stepsToday > 0 ? 'done' : ''}" id="dash-steps">
+            <div class="today-item-icon">👟</div>
+            <div class="today-item-label">Pas</div>
+            <div class="today-item-val">${stepsToday > 0 ? stepsToday.toLocaleString('fr-FR') : 'À faire'}</div>
+          </div>
         </div>
       </div>
 
@@ -383,10 +424,12 @@ function renderDashboard() {
       </div>
     </div>`;
 
-  document.getElementById('dash-weight').onclick = () => setView('poids');
-  document.getElementById('dash-water').onclick  = () => setView('jour');
+  document.getElementById('dash-weight').onclick   = () => setView('poids');
+  document.getElementById('dash-water').onclick    = () => setView('jour');
   document.getElementById('dash-activity').onclick = () => setView('jour');
-  document.getElementById('dash-mood').onclick   = () => setView('jour');
+  document.getElementById('dash-mood').onclick     = () => setView('jour');
+  document.getElementById('dash-sport').onclick    = () => setView('sport');
+  document.getElementById('dash-steps').onclick    = () => setView('sport');
 }
 
 // ===== POIDS =====
@@ -593,6 +636,304 @@ function renderCorps() {
   };
 }
 
+// ===== SPORT =====
+function renderSport() {
+  const main = document.getElementById('main-content');
+  const sportToday = getSportToday(data);
+  const stepsToday = getStepsToday(data);
+  const totalMin = getSportDayTotal(data);
+  const streak = getSportStreak(data);
+  const days30 = getLast30Days();
+
+  // Build chart data
+  const stepsData = days30.map(d => (data.steps||[]).find(s => s.date===d)?.value || 0);
+  const sportData = days30.map(d => (data.sport||[]).filter(s => s.date===d).reduce((sum,s) => sum+(s.duration||0), 0));
+
+  const fields = [
+    { key:'waist',  label:'Tour de taille', icon:'📐' },
+    { key:'hips',   label:'Hanches',        icon:'🔵' },
+    { key:'chest',  label:'Poitrine',       icon:'🔴' },
+    { key:'arms',   label:'Bras',           icon:'💪' },
+    { key:'thighs', label:'Cuisses',        icon:'🦵' },
+  ];
+  const lastM = data.measures.length ? data.measures[data.measures.length-1] : null;
+
+  main.innerHTML = `
+    <div class="sport-view">
+
+      <!-- STATS DU JOUR -->
+      <div class="sport-today-row">
+        <div class="sport-today-card">
+          <div class="sport-today-val">${totalMin}</div>
+          <div class="sport-today-label">min sport</div>
+        </div>
+        <div class="sport-today-card">
+          <div class="sport-today-val">${stepsToday.toLocaleString('fr-FR')}</div>
+          <div class="sport-today-label">pas</div>
+        </div>
+        <div class="sport-today-card">
+          <div class="sport-today-val">${streak}</div>
+          <div class="sport-today-label">jours actifs</div>
+        </div>
+      </div>
+
+      <!-- SAISIE RAPIDE -->
+      <div class="sport-log-card card">
+        <div class="sport-log-title">📝 Saisir la journée</div>
+        <div class="sport-inputs-row">
+          <div class="sport-input-group">
+            <label class="sport-input-label">👟 Pas aujourd'hui</label>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="number" class="sport-input" id="steps-input"
+                placeholder="8500" value="${stepsToday||''}" min="0" max="99999">
+              <button class="btn-sport-save" id="btn-save-steps">OK</button>
+            </div>
+          </div>
+        </div>
+        <button class="btn-add-session" id="btn-add-session">+ Ajouter une séance</button>
+        ${sportToday.length ? `
+          <div class="sessions-today">
+            ${sportToday.map(s => `
+              <div class="session-item">
+                <span class="session-icon">${ACTIVITIES.find(a=>a.id===s.type)?.icon||'⚡'}</span>
+                <span class="session-label">${ACTIVITIES.find(a=>a.id===s.type)?.label||s.type}</span>
+                <span class="session-duration">${s.duration} min</span>
+                ${s.note ? `<span class="session-note">${esc(s.note)}</span>` : ''}
+                <button class="session-del" data-id="${s.id}">✕</button>
+              </div>`).join('')}
+          </div>` : ''}
+      </div>
+
+      <!-- GRAPHIQUE PAS -->
+      <div class="chart-card">
+        <div class="chart-title">
+          <span>👟 Pas / jour</span>
+          <span style="font-size:11px;color:var(--text3);">30 derniers jours</span>
+        </div>
+        ${stepsData.some(v=>v>0)
+          ? `<svg id="steps-chart" width="100%" height="140"></svg>`
+          : `<div class="chart-empty">Ajoutez des données pour voir le graphique</div>`}
+      </div>
+
+      <!-- GRAPHIQUE SPORT -->
+      <div class="chart-card">
+        <div class="chart-title">
+          <span>⏱️ Minutes de sport / jour</span>
+          <span style="font-size:11px;color:var(--text3);">30 derniers jours</span>
+        </div>
+        ${sportData.some(v=>v>0)
+          ? `<svg id="sport-chart" width="100%" height="140"></svg>`
+          : `<div class="chart-empty">Ajoutez des séances pour voir le graphique</div>`}
+      </div>
+
+      <!-- HISTORIQUE SÉANCES -->
+      ${data.sport.length ? `
+      <div class="sport-history card">
+        <div class="sport-history-title">Historique des séances</div>
+        ${Object.entries(
+          [...data.sport].reverse().slice(0,30).reduce((acc, s) => {
+            if (!acc[s.date]) acc[s.date] = [];
+            acc[s.date].push(s); return acc;
+          }, {})
+        ).map(([date, sessions]) => `
+          <div class="sport-history-day">
+            <div class="sport-history-date">${fmtDate(date)}</div>
+            <div class="sport-history-sessions">
+              ${sessions.map(s => `
+                <div class="session-item">
+                  <span class="session-icon">${ACTIVITIES.find(a=>a.id===s.type)?.icon||'⚡'}</span>
+                  <span class="session-label">${ACTIVITIES.find(a=>a.id===s.type)?.label||s.type}</span>
+                  <span class="session-duration">${s.duration} min</span>
+                  ${s.note ? `<span class="session-note">${esc(s.note)}</span>` : ''}
+                </div>`).join('')}
+            </div>
+          </div>`).join('')}
+      </div>` : ''}
+
+      <!-- MESURES CORPORELLES -->
+      <div class="measures-card">
+        <div class="weigh-title">📏 Mensurations</div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:14px;">En centimètres</div>
+        <div class="measures-grid">
+          ${fields.map(f => `
+            <div class="measure-field">
+              <label class="measure-label">${f.icon} ${f.label}</label>
+              <input type="number" class="measure-input" data-key="${f.key}"
+                placeholder="${lastM?.[f.key]||'—'}" value="${lastM?.[f.key]||''}"
+                min="30" max="300" step="0.5">
+            </div>`).join('')}
+        </div>
+        <button class="btn-save-measures" id="btn-save-measures">Enregistrer les mesures</button>
+      </div>
+
+      ${data.measures.length >= 1 ? `
+      <div class="measures-history">
+        <div class="measures-history-header">Historique des mesures</div>
+        ${[...data.measures].reverse().slice(0,6).map((m, i, arr) => {
+          const prev = arr[i+1];
+          return `<div class="measures-history-item">
+            <div class="measures-history-date">${fmtDate(m.date)}</div>
+            <div class="measures-pills">
+              ${fields.filter(f => m[f.key]).map(f => {
+                const delta = prev?.[f.key] ? m[f.key]-prev[f.key] : null;
+                const dStr = delta !== null && delta !== 0
+                  ? `<span class="mdelta ${delta<0?'good':'bad'}"> (${delta>0?'+':''}${delta.toFixed(1)})</span>` : '';
+                return `<span class="measure-pill"><strong>${m[f.key]}</strong>cm ${f.label}${dStr}</span>`;
+              }).join('')}
+            </div>
+          </div>`;
+        }).join('')}
+      </div>` : ''}
+
+    </div>`;
+
+  // Steps save
+  document.getElementById('btn-save-steps').onclick = () => {
+    const val = parseInt(document.getElementById('steps-input').value);
+    if (!val || val <= 0) return;
+    data.steps = (data.steps||[]).filter(s => s.date !== today);
+    data.steps.push({ date: today, value: val });
+    saveData(); checkNewBadges(); renderSport();
+  };
+
+  // Add session
+  document.getElementById('btn-add-session').onclick = () => showAddSessionModal();
+
+  // Delete session
+  document.querySelectorAll('.session-del').forEach(btn => {
+    btn.onclick = () => {
+      data.sport = data.sport.filter(s => s.id !== btn.dataset.id);
+      saveData(); renderSport();
+    };
+  });
+
+  // Measures save
+  document.getElementById('btn-save-measures').onclick = () => {
+    const entry = { date: today };
+    let hasAny = false;
+    fields.forEach(f => {
+      const v = parseFloat(document.querySelector(`.measure-input[data-key="${f.key}"]`).value);
+      if (v && v > 0) { entry[f.key] = v; hasAny = true; }
+    });
+    if (!hasAny) return;
+    data.measures = data.measures.filter(m => m.date !== today);
+    data.measures.push(entry);
+    data.measures.sort((a,b) => a.date.localeCompare(b.date));
+    saveData(); checkNewBadges(); renderSport();
+  };
+
+  // Draw charts
+  if (stepsData.some(v=>v>0)) drawBarChart('steps-chart', stepsData, days30, '#7c3aed', '#ec4899', 'pas', 10000);
+  if (sportData.some(v=>v>0)) drawBarChart('sport-chart', sportData, days30, '#059669', '#10b981', 'min', 30);
+}
+
+function drawBarChart(svgId, values, labels, color1, color2, unit, goalLine) {
+  const svg = document.getElementById(svgId);
+  if (!svg) return;
+  const W = svg.parentElement.clientWidth - 8;
+  const H = 140;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.setAttribute('width', W);
+  svg.innerHTML = '';
+
+  const pad = { l: 36, r: 8, t: 12, b: 28 };
+  const iw = W - pad.l - pad.r;
+  const ih = H - pad.t - pad.b;
+  const max = Math.max(...values, goalLine || 0) * 1.15 || 10;
+  const barW = Math.max(2, iw / values.length - 2);
+  const gap = iw / values.length;
+
+  // Y grid + labels
+  for (let i = 0; i <= 4; i++) {
+    const yy = pad.t + (i/4)*ih;
+    const vv = max - (i/4)*max;
+    svg.innerHTML += `<line x1="${pad.l}" y1="${yy}" x2="${pad.l+iw}" y2="${yy}" stroke="#e9e4f7" stroke-width="1"/>
+      <text x="${pad.l-4}" y="${yy+4}" text-anchor="end" font-size="9" fill="#a89cc0">${vv >= 1000 ? (vv/1000).toFixed(0)+'k' : vv.toFixed(0)}</text>`;
+  }
+
+  // Goal line
+  if (goalLine) {
+    const gy = pad.t + (1 - goalLine/max)*ih;
+    if (gy >= pad.t && gy <= pad.t+ih)
+      svg.innerHTML += `<line x1="${pad.l}" y1="${gy}" x2="${pad.l+iw}" y2="${gy}" stroke="#ec4899" stroke-width="1" stroke-dasharray="3,3" opacity=".6"/>`;
+  }
+
+  // Gradient def
+  svg.innerHTML += `<defs><linearGradient id="bg_${svgId}" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="${color1}"/>
+    <stop offset="100%" stop-color="${color2}"/>
+  </linearGradient></defs>`;
+
+  // Bars
+  values.forEach((v, i) => {
+    if (!v) return;
+    const bh = Math.max(2, (v/max)*ih);
+    const bx = pad.l + i*gap + gap/2 - barW/2;
+    const by = pad.t + ih - bh;
+    const isToday = labels[i] === today;
+    svg.innerHTML += `<rect x="${bx}" y="${by}" width="${barW}" height="${bh}"
+      fill="url(#bg_${svgId})" rx="2" opacity="${isToday?'1':'0.6'}"/>`;
+    // Today highlight
+    if (isToday) svg.innerHTML += `<rect x="${bx-1}" y="${by-1}" width="${barW+2}" height="${bh+1}"
+      fill="none" stroke="${color1}" stroke-width="1.5" rx="2"/>`;
+  });
+
+  // X axis labels — only show Mon of each week
+  labels.forEach((d, i) => {
+    const dt = new Date(d + 'T12:00:00');
+    if (dt.getDay() === 1 || i === 0 || i === labels.length-1) {
+      const bx = pad.l + i*gap + gap/2;
+      svg.innerHTML += `<text x="${bx}" y="${H-4}" text-anchor="middle" font-size="8" fill="#a89cc0">
+        ${dt.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}).replace(' ','\u00A0')}</text>`;
+    }
+  });
+}
+
+// ===== MODAL: ADD SESSION =====
+function showAddSessionModal() {
+  const box = document.getElementById('modal-box');
+  let selectedType = 'marche';
+  box.innerHTML = `
+    <div class="modal-handle"></div>
+    <div class="modal-title">Nouvelle séance</div>
+    <div class="section-divider">Type d'activité</div>
+    <div class="activity-grid" style="margin-bottom:16px;">
+      ${ACTIVITIES.map(a => `
+        <button class="activity-btn ${a.id===selectedType?'active':''}" data-act="${a.id}">
+          <span class="activity-btn-icon">${a.icon}</span>${a.label}
+        </button>`).join('')}
+    </div>
+    <div class="section-divider">Durée</div>
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;">
+      <input type="number" class="modal-input" id="session-duration"
+        placeholder="30" min="1" max="480" style="margin-bottom:0;flex:1;font-size:22px;font-weight:700;text-align:center;">
+      <span style="font-size:16px;color:var(--text2);font-weight:600;">minutes</span>
+    </div>
+    <input type="text" class="modal-input" id="session-note"
+      placeholder="Note optionnelle (ex: course à jeun, bonne séance…)" maxlength="80">
+    <button class="btn-modal-primary" id="btn-save-session">Enregistrer</button>
+    <button class="btn-modal-secondary" id="btn-cancel-session">Annuler</button>`;
+
+  document.getElementById('modal-overlay').classList.remove('hidden');
+  box.querySelectorAll('.activity-btn').forEach(btn => {
+    btn.onclick = () => {
+      selectedType = btn.dataset.act;
+      box.querySelectorAll('.activity-btn').forEach(b => b.classList.toggle('active', b===btn));
+    };
+  });
+  document.getElementById('btn-save-session').onclick = () => {
+    const duration = parseInt(document.getElementById('session-duration').value);
+    if (!duration || duration <= 0) return;
+    const note = document.getElementById('session-note').value.trim();
+    data.sport = data.sport || [];
+    data.sport.push({ id:genId(), date:today, type:selectedType, duration, note:note||undefined });
+    data.sport.sort((a,b) => a.date.localeCompare(b.date));
+    saveData(); checkNewBadges(); closeModal(); renderSport();
+  };
+  document.getElementById('btn-cancel-session').onclick = closeModal;
+  document.getElementById('modal-overlay').onclick = e => { if (e.target===document.getElementById('modal-overlay')) closeModal(); };
+}
+
 // ===== JOURNÉE =====
 function renderJour() {
   const main = document.getElementById('main-content');
@@ -601,6 +942,8 @@ function renderJour() {
   const actToday = getActivityToday(data);
   const calToday = getCaloriesToday(data);
   const foodToday = getFoodToday(data);
+  const stepsToday = getStepsToday(data);
+  const sportMinToday = getSportDayTotal(data);
   const doneIds = getDoneChallengeIds();
   const autoChallenges = getDailyChallenges();
   const customRecurring = (data.challenges || []).filter(c => c.recurring);
